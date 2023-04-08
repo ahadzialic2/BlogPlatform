@@ -16,8 +16,10 @@ public class DatabaseContext:DbContext
         // connect to postgres with connection string from app settings
         options.UseNpgsql(Configuration.GetConnectionString("LocalConnection"));
     }
-    public DbSet<Blog> Blogs { get; set; }
+    
+    public DbSet<BlogPost> BlogPosts { get; set; }
 
     public DbSet<Comment> Comments { get; set; }
 
+    public DbSet<Tag> Tags { get; set; }
 }

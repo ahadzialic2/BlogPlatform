@@ -2,11 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BlogPlatform.API.Models;
 
-public class Blog
+public class BlogPost
 {
     [Key]
     public string Slug { get; set; }
-    public string? Title { get; set; }
+    public string Title { get; set; }
     public string? Description { get; set; }
     public string? Body { get; set; }
     public ICollection<Tag>? Tags { get; set; }
