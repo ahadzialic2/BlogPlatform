@@ -4,9 +4,8 @@ namespace BlogPlatform.API.Models;
 
 public class BlogPost
 {
-    [Key]
-    public string Slug { get; set; }
-    public string Title { get; set; }
+    [Key] public string Slug { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Body { get; set; }
     public ICollection<Tag>? Tags { get; set; }
