@@ -17,8 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controllers" />
       <Folder Include="Data\Migrations" />
+      <Folder Include="Envelopes\Requests" />
+      <Folder Include="Envelopes\Responses" />
+      <Folder Include="Services\Interfaces" />
     </ItemGroup>
 
 </Project>
