@@ -25,7 +25,6 @@ public class BlogPostService:IBlogPostService
                 Title = x.Title,
                 Description = x.Description,
                 Body = x.Body,
-                Tags = x.Tags,
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt
             })
