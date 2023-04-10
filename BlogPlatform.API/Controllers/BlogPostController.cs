@@ -19,13 +19,27 @@ public class BlogPostController:ControllerBase
     [HttpGet("{slug}")]
     public async Task<ActionResult<GetSingleBlogPostResponseDto>> GetSingleBlogPost(string slug)
     {
-        return Ok(await _blogPostService.GetSingleBlogPost(slug));
+        try
+        {
+            return Ok(await _blogPostService.GetSingleBlogPost(slug));
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     [HttpGet]
     public async Task<ActionResult<GetBlogPostsResponseDto>> GetBlogPosts([FromQuery] string? tag)
     {
-        return Ok(await _blogPostService.GetBlogPosts(tag));
+        try
+        {
+            return Ok(await _blogPostService.GetBlogPosts(tag));
+        }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     [HttpPost]
@@ -40,6 +54,5 @@ public class BlogPostController:ControllerBase
         {
             return StatusCode(StatusCodes.Status406NotAcceptable, ex.Message);
         }
-
     }
 }
