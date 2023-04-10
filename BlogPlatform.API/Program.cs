@@ -1,5 +1,7 @@
 using BlogPlatform.API.Data;
 using BlogPlatform.API.Extensions;
+using BlogPlatform.API.Services;
+using BlogPlatform.API.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,13 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DatabaseContext>();
 
+
+builder.Services.AddTransient<IBlogPostService, BlogPostService>();
+
+
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.IsLocal())

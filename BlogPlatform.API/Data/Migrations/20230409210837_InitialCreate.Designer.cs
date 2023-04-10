@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogPlatform.API.Data.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230408233459_InitialCreate")]
+    [Migration("20230409210837_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -49,6 +49,21 @@ namespace BlogPlatform.API.Data.Migrations
                     b.HasKey("Slug");
 
                     b.ToTable("BlogPosts");
+                });
+
+            modelBuilder.Entity("BlogPlatform.API.Models.BlogPostTag", b =>
+                {
+                    b.Property<string>("BlogPostSlug")
+                        .HasColumnType("text");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BlogPostSlug", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("BlogPostsTags");
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.Comment", b =>
@@ -97,19 +112,19 @@ namespace BlogPlatform.API.Data.Migrations
                     b.ToTable("Tags");
                 });
 
-            modelBuilder.Entity("BlogPostTag", b =>
+            modelBuilder.Entity("BlogPlatform.API.Models.BlogPostTag", b =>
                 {
-                    b.Property<string>("BlogPostsSlug")
-                        .HasColumnType("text");
+                    b.HasOne("BlogPlatform.API.Models.BlogPost", null)
+                        .WithMany()
+                        .HasForeignKey("BlogPostSlug")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<int>("TagsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("BlogPostsSlug", "TagsId");
-
-                    b.HasIndex("TagsId");
-
-                    b.ToTable("BlogPostTag");
+                    b.HasOne("BlogPlatform.API.Models.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.Comment", b =>
@@ -121,21 +136,6 @@ namespace BlogPlatform.API.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("BlogPost");
-                });
-
-            modelBuilder.Entity("BlogPostTag", b =>
-                {
-                    b.HasOne("BlogPlatform.API.Models.BlogPost", null)
-                        .WithMany()
-                        .HasForeignKey("BlogPostsSlug")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BlogPlatform.API.Models.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.BlogPost", b =>
