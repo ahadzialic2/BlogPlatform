@@ -112,13 +112,13 @@ namespace BlogPlatform.API.Data.Migrations
             modelBuilder.Entity("BlogPlatform.API.Models.BlogPostTag", b =>
                 {
                     b.HasOne("BlogPlatform.API.Models.BlogPost", "BlogPost")
-                        .WithMany("BlogPostTags")
+                        .WithMany()
                         .HasForeignKey("BlogPostSlug")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BlogPlatform.API.Models.Tag", "Tag")
-                        .WithMany("BlogPostTags")
+                        .WithMany()
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -141,14 +141,7 @@ namespace BlogPlatform.API.Data.Migrations
 
             modelBuilder.Entity("BlogPlatform.API.Models.BlogPost", b =>
                 {
-                    b.Navigation("BlogPostTags");
-
                     b.Navigation("Comments");
-                });
-
-            modelBuilder.Entity("BlogPlatform.API.Models.Tag", b =>
-                {
-                    b.Navigation("BlogPostTags");
                 });
 #pragma warning restore 612, 618
         }
