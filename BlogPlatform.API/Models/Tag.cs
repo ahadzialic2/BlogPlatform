@@ -6,5 +6,7 @@ public class Tag
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public ICollection<BlogPost> BlogPosts { get; set; } = new List<BlogPost>();
+    public ICollection<BlogPost>? BlogPosts { get; } = new List<BlogPost>();
+    public ICollection<BlogPostTag> BlogPostTags { get; } = new List<BlogPostTag>();
+
 }

@@ -176,8 +176,6 @@ public class BlogPostService:IBlogPostService
             Title = createBlogPostRequestDto.Title,
             Description = createBlogPostRequestDto.Description,
             Body = createBlogPostRequestDto.Body,
-            Tags = null,
-            Comments = null,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = null
         };

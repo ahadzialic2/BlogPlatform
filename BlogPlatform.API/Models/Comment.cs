@@ -6,6 +6,6 @@ public class Comment
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string Body { get; set; } = string.Empty;
-    public BlogPost BlogPost { get; set; } = new BlogPost();
-    public string BlogPostSlug { get; set; } = string.Empty;
+    public BlogPost BlogPost { get; set; } = null!;
+    public string BlogPostSlug { get; set; } = null!;
 }
