@@ -121,7 +121,6 @@ public class BlogPostService:IBlogPostService
         {
             throw new NotImplementedException();
         }
-        
         var blogPost = new BlogPost
         {
             Slug = newSlug,
@@ -134,33 +133,41 @@ public class BlogPostService:IBlogPostService
         await _databaseContext.BlogPosts.AddAsync(blogPost);
         await _databaseContext.SaveChangesAsync();
 
-        var tgs = await _databaseContext.Tags.Select(x => x.Name).ToListAsync();
+        var tagsExisting = await _databaseContext.Tags.Select(x => x.Name).ToListAsync();
+        var tag = new Tag();
         foreach (var tagName in createBlogPostRequestDto.Tags)
         {
-            if (!tgs.Contains(tagName))
+            if (!tagsExisting.Contains(tagName))
             {
-                await _databaseContext.Tags.AddAsync(new Tag
+                tag = new Tag
                 {
                     Name = tagName,
-                });
+                };
+                await _databaseContext.Tags.AddAsync(tag);
                 await _databaseContext.SaveChangesAsync();
-            }
-        }
-        
-        foreach (var tagName in createBlogPostRequestDto.Tags)
-        {
-            var tagId = await _databaseContext.Tags
-                .Where(x => x.Name == tagName)
-                .Select(x => x.Id)
-                .FirstOrDefaultAsync();
-            await _databaseContext.BlogPostsTags.AddAsync(new BlogPostTag
-            {
-                BlogPostSlug = newSlug,
-                TagId = tagId
-            });
-        }
 
+                await _databaseContext.BlogPostsTags.AddAsync(new BlogPostTag
+                {
+                    BlogPostSlug = newSlug,
+                    TagId = tag.Id,
+                });
+            }
+            else
+            {
+                var tagId = await _databaseContext.Tags
+                    .Where(x => x.Name == tagName)
+                    .Select(x => x.Id)
+                    .FirstAsync();
+                    await _databaseContext.BlogPostsTags.AddAsync(new BlogPostTag
+                {
+                    BlogPostSlug = newSlug,
+                    TagId = tagId,
+                });
+            }
+            
+        }
         await _databaseContext.SaveChangesAsync();
+        
         return new GetSingleBlogPostResponseDto
         {
             Slug = newSlug,
