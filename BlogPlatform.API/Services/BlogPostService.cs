@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using BlogPlatform.API.Data;
 using BlogPlatform.API.Envelopes.Requests;
@@ -17,24 +18,15 @@ public class BlogPostService:IBlogPostService
         _databaseContext = databaseContext;
     }
     public async Task<GetSingleBlogPostResponseDto> GetSingleBlogPost(string slug)
-    {
-        var tagIds = await _databaseContext.BlogPostsTags
+    { 
+        var tags = await _databaseContext.BlogPostsTags
+            .Include(x => x.Tag)
             .Where(x => x.BlogPostSlug == slug)
-            .Select(x=> x.TagId)
+            .Select(x => x.Tag.Name)
             .ToListAsync();
         
-        var tags = await _databaseContext.Tags.ToListAsync();
-        var tagsList = new List<string>();
-        foreach (var id in tagIds)
-        {
-            foreach (var tag in tags)
-            {
-                if(tag.Id == id) tagsList.Add(tag.Name);
-            }
-        }
         var blogPost = await _databaseContext.BlogPosts
             .AsNoTracking()
-            .Include(x => x.Tags)
             .Where(x => x.Slug == slug)
             .Select(x => new GetSingleBlogPostResponseDto
             {
@@ -42,7 +34,7 @@ public class BlogPostService:IBlogPostService
                 Title = x.Title,
                 Description = x.Description,
                 Body = x.Body,
-                Tags = tagsList,
+                Tags = tags,
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt
             })
@@ -56,106 +48,66 @@ public class BlogPostService:IBlogPostService
     public async Task<GetBlogPostsResponseDto> GetBlogPosts(string? tagFilter)
     {
         ICollection<GetSingleBlogPostResponseDto> blogPostsResponseList = new List<GetSingleBlogPostResponseDto>();
-        var count = 0;
-        var tagsStrings = new List<string>();
-
-        var blogPosts = await _databaseContext.BlogPosts.ToListAsync();
-        var tags = await _databaseContext.Tags.ToListAsync();
-
         if (tagFilter is null)
         {
+            var blogPosts = await _databaseContext.BlogPosts
+                .Include(x => x.Tags)
+                .ToListAsync();
+            var tags = new List<string>();
             foreach (var blogPost in blogPosts)
             {
-                var tagIds = await _databaseContext.BlogPostsTags
-                    .Where(x => x.BlogPostSlug == blogPost.Slug)
-                    .Select(x => x.TagId)
-                    .ToListAsync();
-                foreach (var id in tagIds)
-                {
-                    foreach (var tag in tags)
+                tags.Clear();
+                if (blogPost.Tags != null)
+                    foreach (var tag in blogPost.Tags)
                     {
-                        if (tag.Id == id) tagsStrings.Add(tag.Name);
+                        tags.Add(tag.Name);
                     }
-                }
-
-                blogPostsResponseList.Add(new GetSingleBlogPostResponseDto
+                var blogPostDto = new GetSingleBlogPostResponseDto
                 {
                     Slug = blogPost.Slug,
                     Title = blogPost.Title,
                     Description = blogPost.Description,
                     Body = blogPost.Body,
-                    Tags = tagsStrings,
+                    Tags = tags,
                     CreatedAt = blogPost.CreatedAt,
                     UpdatedAt = blogPost.UpdatedAt
-                });
+                };
+                blogPostsResponseList.Add(blogPostDto);
             }
-            return new GetBlogPostsResponseDto
-            {
-                BlogPosts = blogPostsResponseList,
-                PostsCount = blogPostsResponseList.Count
-            };
         }
         else
         {
-            //check if tag exis
-            /*foreach (var tag in tags)
-            {
-                if(tag.Name == tagFilter)
-            }*/
-            var tagExist = await _databaseContext.Tags
-                .AnyAsync(x => x.Name == tagFilter);
-            if (!tagExist) throw new NotImplementedException();
-
-            //find query tag id
-            var tagId = await _databaseContext.Tags
-                .Where(x => x.Name == tagFilter)
-                .Select(x => x.Id)
-                .FirstAsync();
-
-            //find slugs by given query tag Id
-            var slugsByTagId = await _databaseContext.BlogPostsTags
-                .Where(x => x.TagId == tagId)
-                .Select(x => x.BlogPostSlug)
+            var blogPosts = await _databaseContext.BlogPostsTags
+                .Where(x => x.Tag.Name == tagFilter)
+                .Select(x=> x.BlogPost)
                 .ToListAsync();
-
-            //find blogPosts with given slug
-            foreach (var slug in slugsByTagId)
+            var tags = new List<string>();
+            foreach (var blogPost in blogPosts)
             {
-                var tagsBySlug = await _databaseContext.BlogPostsTags
-                    .Where(x => x.BlogPostSlug == slug)
-                    .Select(x => x.TagId)
-                    .ToListAsync();
-                var tagsList = new List<string>();
-                foreach (var tag in tagsBySlug)
-                {
-                    foreach (var tg in tags)
+                tags.Clear();
+                if (blogPost.Tags != null)
+                    foreach (var tag in blogPost.Tags)
                     {
-                        if (tg.Id == tag) tagsList.Add(tg.Name);
+                        tags.Add(tag.Name);
                     }
-                }
-
-                foreach (var blogPost in blogPosts)
+                var blogPostDto = new GetSingleBlogPostResponseDto
                 {
-                    if (slug == blogPost.Slug)
-                        blogPostsResponseList.Add(new GetSingleBlogPostResponseDto
-                        {
-                            Slug = blogPost.Slug,
-                            Title = blogPost.Title,
-                            Description = blogPost.Description,
-                            Body = blogPost.Body,
-                            Tags = tagsList,
-                            CreatedAt = blogPost.CreatedAt,
-                            UpdatedAt = blogPost.UpdatedAt
-                        });
-                }
+                    Slug = blogPost.Slug,
+                    Title = blogPost.Title,
+                    Description = blogPost.Description,
+                    Body = blogPost.Body,
+                    Tags = tags,
+                    CreatedAt = blogPost.CreatedAt,
+                    UpdatedAt = blogPost.UpdatedAt
+                };
+                    blogPostsResponseList.Add(blogPostDto);
             }
-            count = blogPostsResponseList.Count();
-            return new GetBlogPostsResponseDto
-            {
-                BlogPosts = blogPostsResponseList,
-                PostsCount = count
-            };
         }
+        return new GetBlogPostsResponseDto
+        {
+            BlogPosts = blogPostsResponseList,
+            PostsCount = blogPostsResponseList.Count
+        };
     }
 
     public async Task<GetSingleBlogPostResponseDto> CreateBlogPost(CreateBlogPostRequestDto createBlogPostRequestDto)
