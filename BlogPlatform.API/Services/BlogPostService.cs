@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using BlogPlatform.API.Data;
 using BlogPlatform.API.Envelopes.Requests;
 using BlogPlatform.API.Envelopes.Responses;
+using BlogPlatform.API.Helpers;
 using BlogPlatform.API.Models;
 using BlogPlatform.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ public class BlogPostService:IBlogPostService
     public async Task<GetSingleBlogPostResponseDto> GetSingleBlogPost(string slug)
     { 
         var tags = await _databaseContext.BlogPostsTags
+            .AsNoTracking()
             .Include(x => x.Tag)
             .Where(x => x.BlogPostSlug == slug)
             .Select(x => x.Tag.Name)
@@ -39,8 +41,11 @@ public class BlogPostService:IBlogPostService
                 UpdatedAt = x.UpdatedAt
             })
             .FirstOrDefaultAsync();
-        
-        if (blogPost is null) throw new NotImplementedException();
+
+        if (blogPost is null)
+        {
+            throw new NotImplementedException();
+        }
         
             return blogPost;
     }
@@ -51,63 +56,79 @@ public class BlogPostService:IBlogPostService
         if (tagFilter is null)
         {
             var blogPosts = await _databaseContext.BlogPosts
-                .Include(x => x.Tags)
+                .Include(x=>x.Tags)
+                .AsNoTracking()
                 .ToListAsync();
             var tags = new List<string>();
+
             foreach (var blogPost in blogPosts)
             {
-                tags.Clear();
                 if (blogPost.Tags != null)
+                {
                     foreach (var tag in blogPost.Tags)
                     {
                         tags.Add(tag.Name);
                     }
+                }
+                    
                 var blogPostDto = new GetSingleBlogPostResponseDto
                 {
                     Slug = blogPost.Slug,
                     Title = blogPost.Title,
                     Description = blogPost.Description,
                     Body = blogPost.Body,
-                    Tags = tags,
+                    Tags = new List<string>(tags),
                     CreatedAt = blogPost.CreatedAt,
                     UpdatedAt = blogPost.UpdatedAt
                 };
                 blogPostsResponseList.Add(blogPostDto);
+                tags.Clear();
             }
         }
         else
         {
-            var blogPosts = await _databaseContext.BlogPostsTags
-                .Where(x => x.Tag.Name == tagFilter)
-                .Select(x=> x.BlogPost)
+            var blogPosts = await _databaseContext.BlogPosts
+                .Include(x => x.Tags)
                 .ToListAsync();
             var tags = new List<string>();
+            var flag = false;
             foreach (var blogPost in blogPosts)
             {
-                tags.Clear();
                 if (blogPost.Tags != null)
+                {
                     foreach (var tag in blogPost.Tags)
                     {
                         tags.Add(tag.Name);
-                    }
+                        if (tag.Name == tagFilter) flag = true;
+                    } 
+                }
+                    
+                if (!flag)
+                {
+                    tags.Clear();
+                    continue;
+                }
+
+                flag = false;
                 var blogPostDto = new GetSingleBlogPostResponseDto
                 {
                     Slug = blogPost.Slug,
                     Title = blogPost.Title,
                     Description = blogPost.Description,
                     Body = blogPost.Body,
-                    Tags = tags,
+                    Tags = new List<string>(tags),
                     CreatedAt = blogPost.CreatedAt,
                     UpdatedAt = blogPost.UpdatedAt
                 };
-                    blogPostsResponseList.Add(blogPostDto);
+                blogPostsResponseList.Add(blogPostDto);
+                tags.Clear();
             }
         }
         return new GetBlogPostsResponseDto
-        {
-            BlogPosts = blogPostsResponseList,
-            PostsCount = blogPostsResponseList.Count
-        };
+       {
+           BlogPosts = blogPostsResponseList,
+           PostsCount = blogPostsResponseList.Count
+       };
     }
 
     public async Task<GetSingleBlogPostResponseDto> CreateBlogPost(CreateBlogPostRequestDto createBlogPostRequestDto)
@@ -116,7 +137,7 @@ public class BlogPostService:IBlogPostService
         {
             throw new NotImplementedException();
         }
-        var newSlug = GenerateSlug(createBlogPostRequestDto.Title);
+        var newSlug = GenerateBlogPostSlug.GenerateSlug(createBlogPostRequestDto.Title);
         if (newSlug.Equals(string.Empty))
         {
             throw new NotImplementedException();
@@ -133,62 +154,56 @@ public class BlogPostService:IBlogPostService
         await _databaseContext.BlogPosts.AddAsync(blogPost);
         await _databaseContext.SaveChangesAsync();
 
-        var tagsExisting = await _databaseContext.Tags.Select(x => x.Name).ToListAsync();
-        var tag = new Tag();
-        foreach (var tagName in createBlogPostRequestDto.Tags)
+        var tagsExisting = await _databaseContext.Tags
+            .AsNoTracking()
+            .Select(x => x.Name)
+            .ToListAsync();
+        if (createBlogPostRequestDto.Tags != null)
         {
-            if (!tagsExisting.Contains(tagName))
+            foreach (var tagName in createBlogPostRequestDto.Tags)
             {
-                tag = new Tag
+                if (!tagsExisting.Contains(tagName))
                 {
-                    Name = tagName,
-                };
-                await _databaseContext.Tags.AddAsync(tag);
-                await _databaseContext.SaveChangesAsync();
+                    Tag tag = new Tag
+                    {
+                        Name = tagName,
+                    };
+                    await _databaseContext.Tags.AddAsync(tag);
+                    await _databaseContext.SaveChangesAsync();
 
-                await _databaseContext.BlogPostsTags.AddAsync(new BlogPostTag
-                {
-                    BlogPostSlug = newSlug,
-                    TagId = tag.Id,
-                });
-            }
-            else
-            {
-                var tagId = await _databaseContext.Tags
-                    .Where(x => x.Name == tagName)
-                    .Select(x => x.Id)
-                    .FirstAsync();
                     await _databaseContext.BlogPostsTags.AddAsync(new BlogPostTag
+                    {
+                        BlogPostSlug = newSlug,
+                        TagId = tag.Id,
+                    });
+                }
+                else
                 {
-                    BlogPostSlug = newSlug,
-                    TagId = tagId,
-                });
+                    var tagId = await _databaseContext.Tags
+                        .AsNoTracking()
+                        .Where(x => x.Name == tagName)
+                        .Select(x => x.Id)
+                        .FirstAsync();
+                    await _databaseContext.BlogPostsTags.AddAsync(new BlogPostTag
+                    {
+                        BlogPostSlug = newSlug,
+                        TagId = tagId,
+                    });
+                }
             }
-            
         }
+
         await _databaseContext.SaveChangesAsync();
-        
-        return new GetSingleBlogPostResponseDto
-        {
-            Slug = newSlug,
-            Title = blogPost.Title,
-            Description = blogPost.Description,
-            Body = blogPost.Body,
-            Tags = createBlogPostRequestDto.Tags,
-            CreatedAt = blogPost.CreatedAt,
-            UpdatedAt = blogPost.UpdatedAt
-        };
-    }
-    public static string GenerateSlug(string phrase) 
-    { 
-        string str = phrase.ToLower(); 
-        // invalid chars           
-        str = Regex.Replace(str, @"[^a-z0-9\s-]", ""); 
-        // convert multiple spaces into one space   
-        str = Regex.Replace(str, @"\s+", " ").Trim(); 
-        // cut and trim 
-        str = str.Substring(0, str.Length <= 45 ? str.Length : 45).Trim();   
-        str = Regex.Replace(str, @"\s", "-"); // hyphens   
-        return str; 
+
+            return new GetSingleBlogPostResponseDto
+            {
+                Slug = newSlug,
+                Title = blogPost.Title,
+                Description = blogPost.Description,
+                Body = blogPost.Body,
+                Tags = createBlogPostRequestDto.Tags,
+                CreatedAt = blogPost.CreatedAt,
+                UpdatedAt = blogPost.UpdatedAt
+            };
     }
 }
