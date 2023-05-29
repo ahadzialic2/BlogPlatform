@@ -5,7 +5,6 @@ using BlogPlatform.API.Helpers;
 using BlogPlatform.API.Models;
 using BlogPlatform.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-
 namespace BlogPlatform.API.Services;
 
 public class BlogPostService:IBlogPostService

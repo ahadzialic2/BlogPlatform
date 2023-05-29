@@ -1,5 +1,6 @@
 using BlogPlatform.API.Data;
 using BlogPlatform.API.Extensions;
+using BlogPlatform.API.Models;
 using BlogPlatform.API.Services;
 using BlogPlatform.API.Services.Interfaces;
 
@@ -14,8 +15,20 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DatabaseContext>();
 
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.User.RequireUniqueEmail = true;
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+}).AddEntityFrameworkStores<DatabaseContext>();
 
 builder.Services.AddTransient<IBlogPostService, BlogPostService>();
+builder.Services.AddTransient<IUserService, UserService>();
+
 
 
 var app = builder.Build();
