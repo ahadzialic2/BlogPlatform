@@ -3,6 +3,7 @@ using System;
 using BlogPlatform.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BlogPlatform.API.Data.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20230506135504_RenameColumnsNameAndSurname")]
+    partial class RenameColumnsNameAndSurname
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,7 +48,7 @@ namespace BlogPlatform.API.Data.Migrations
 
                     b.HasKey("Slug");
 
-                    b.ToTable("BlogPosts", (string)null);
+                    b.ToTable("BlogPosts");
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.BlogPostTag", b =>
@@ -60,7 +63,7 @@ namespace BlogPlatform.API.Data.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("BlogPostsTags", (string)null);
+                    b.ToTable("BlogPostsTags");
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.Comment", b =>
@@ -89,7 +92,7 @@ namespace BlogPlatform.API.Data.Migrations
 
                     b.HasIndex("BlogPostSlug");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.Tag", b =>
@@ -106,7 +109,7 @@ namespace BlogPlatform.API.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("BlogPlatform.API.Models.User", b =>

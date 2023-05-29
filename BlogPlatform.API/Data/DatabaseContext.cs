@@ -1,12 +1,14 @@
 using BlogPlatform.API.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace BlogPlatform.API.Data;
 
-public class DatabaseContext:DbContext
+public class DatabaseContext:IdentityUserContext<User, Guid>
 {
     protected readonly IConfiguration Configuration;
-
     public DatabaseContext(IConfiguration configuration)
     {
         Configuration = configuration;
@@ -18,6 +20,8 @@ public class DatabaseContext:DbContext
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<BlogPost>()
             .HasMany(e => e.Tags)
             .WithMany(e => e.BlogPosts)
